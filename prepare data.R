@@ -110,7 +110,7 @@ data <- merge(data, thc, by = c("state","year"))
 data[!complete.cases(data)] # none
 
 # remove unnecessary variables
-data <- data[,.(state,sex,year,diag_prop,thc_dev)]
+data <- data[,.(state,sex,year,gkv_pop,diag_prop,thc_dev)]
 
 
 # 2.2) THC deviation and lags
@@ -134,7 +134,7 @@ data <- merge(data,
               lag_dat,
               by = c("state","sex","year","thc_dev"), all.x = T)
 
-data <- data[,.SD, by = .(state,sex,year,diag_prop,thc_dev)]
+data <- data[,.SD, by = .(state,sex,year,gkv_pop,diag_prop,thc_dev)]
 
 # 2.3) Variable definitions
 # ----------------------------------------------
