@@ -25,6 +25,8 @@ library( Hmisc )
 theme_set(theme_gdocs())
 options(scipen=999)
 
+
+
 # ==================================================================================================================================================================
 # ==================================================================================================================================================================
 # ==================================================================================================================================================================
@@ -41,6 +43,7 @@ nrow(data) # 442
 # state... federal state name -> 16 states and national ("Bund")
 # sex... sex -> men and women
 # year... 2009 to 2021
+# gkv_pop... population size (number of persons covered by statutory health insurance)
 # diag_prop... diagnostic proportion (dependent variable)
 # thc_dev... deviation of THC from 12% (independent variable)
 # thc_dev_lag_X ... lag of thc_dev by X years
@@ -80,6 +83,16 @@ anova(menmod1, menmod2) # mod2: lower AIC but the same BIC
 lmtest::lrtest(menmod1, menmod2) # same results -> lower LogLik in mod2
 sjPlot::tab_model(menmod1, menmod2) # mod2: increased ICC und higher conditional R2 (.66 vs .56)
 
+##  look at random slopes
+state.effects.men <- data.table(state = row.names(ranef(menmod2)$state),
+                            ranef(menmod2)$state)
+names(state.effects.men) <- c("state","interc.dev","slope.dev")
+state.effects.men$interc.all <- fixef(menmod2)[1]
+state.effects.men$slope.all <- fixef(menmod2)[2]
+
+state.effects.men[, slope.state := slope.dev + slope.all]
+state.effects.men[, summary(slope.state)]
+
 
 # 2.2) Women
 # ----------------------------------------------
@@ -100,6 +113,16 @@ confint(womenmod2) # THC: 0.1 to 0.3
 anova(womenmod1, womenmod2) # mod2: lower AIC and BIC
 lmtest::lrtest(womenmod1, womenmod2) # same results -> lower LogLik in mod2
 sjPlot::tab_model(womenmod1, womenmod2) # mod2: increased ICC und higher conditional R2 (.69 vs .80)
+
+##  look at random slopes
+state.effects.women <- data.table(state = row.names(ranef(womenmod2)$state),
+                                ranef(womenmod2)$state)
+names(state.effects.women) <- c("state","interc.dev","slope.dev")
+state.effects.women$interc.all <- fixef(womenmod2)[1]
+state.effects.women$slope.all <- fixef(womenmod2)[2]
+
+state.effects.women[, slope.state := slope.dev + slope.all]
+state.effects.women[, summary(slope.state)]
 
 
 ##  PREDICT FOR NATIONAL
@@ -246,21 +269,24 @@ sjPlot::tab_model(womenmod2, menmod2,
 ##  diagnostic proportion
 data[state == "Bund" & sex == "total",.(year,diag_prop)]
 data[state == "Bund" & sex == "men",.(year,diag_prop)]
-data[state == "Bund" & sex == "men" & year == 2021,diag_prop] - data[state == "Bund" & sex == "men" & year == 2009,diag_prop]
-data[state == "Bund" & sex == "men" & year == 2021,diag_prop] / data[state == "Bund" & sex == "men" & year == 2009,diag_prop]
+data[state == "Bund" & sex == "men" & year == 2021,diag_prop] - data[state == "Bund" & sex == "men" & year == 2009,diag_prop] # abs
+data[state == "Bund" & sex == "men" & year == 2021,diag_prop] / data[state == "Bund" & sex == "men" & year == 2009,diag_prop] # rel
 
 data[state == "Bund" & sex == "women",.(year,diag_prop)]
-data[state == "Bund" & sex == "women" & year == 2021,diag_prop] - data[state == "Bund" & sex == "women" & year == 2009,diag_prop]
-data[state == "Bund" & sex == "women" & year == 2021,diag_prop] / data[state == "Bund" & sex == "women" & year == 2009,diag_prop]
+data[state == "Bund" & sex == "women" & year == 2021,diag_prop] - data[state == "Bund" & sex == "women" & year == 2009,diag_prop] # abs
+data[state == "Bund" & sex == "women" & year == 2021,diag_prop] / data[state == "Bund" & sex == "women" & year == 2009,diag_prop] # rel
 
 data[state == "Bund" & sex == "total",.(year,thc_dev+12)]
-data[state != "Bund" & sex == "total" & year %in% c(2009,2021),.(state,year,thc = thc_dev+12)][order(state,year),diff(thc), by = state]
+data[state == "Bund" & sex == "total" & year == 2021,.(thc_dev+12)] / data[state == "Bund" & sex == "total" & year == 2009,.(thc_dev+12)] # rel
+data[state != "Bund" & sex == "total" & year %in% c(2009,2021),.(state,year,thc = thc_dev+12)][order(state,year),diff(thc), by = state] # abs
 
 ##  THC
 data[state != "Bund" & sex == "total" & year %in% c(2009,2021),.(state,year,thc = thc_dev+12)][order(state,year),diff(thc), by = state]
 data[state != "Bund" & sex == "total",.(state,year,thc = thc_dev+12)][, .(b = summary(lm(thc ~ year))$coef[2,1],
                                                                           t = summary(lm(thc ~ year))$coef[2,3]), by = state]
-
+qt(1 - 0.05 / 2, 11) # t (df=11) = 2.2
+data[state != "Bund" & sex == "total",.(state,year,thc = thc_dev+12)][, .(b = summary(lm(thc ~ year))$coef[2,1],
+                                                                          t = summary(lm(thc ~ year))$coef[2,3]), by = state][abs(t)<2.2]
 
 data[state != "Bund" & sex == "total" & year == 2021,.(state,diag_prop)][order(diag_prop)]
 
@@ -273,28 +299,29 @@ data[state != "Bund" & sex == "total" & year == 2021,.(state,diag_prop)][order(d
 # 5) FIGURES
 # ______________________________________________________________________________________________________________________
 
-# 5.1) FIGURE 1 - Bar plot of trend of % F12 diagnoses per users
+# 5.1) FIGURE 1 - Boxplot of diagnostic proportion over the years
 # ----------------------------------------------
 
-pdat <- data[state == "Bund",
-             .(year,sex,diag_prop=diag_prop/100)]
+pdat <- data[state != "Bund" & sex != "total",
+             .(year,sex,gkv_pop,diag_prop = diag_prop/100)]
 pdat[,Geschlecht := ifelse(sex == "men","männlich",
                            ifelse(sex == "women", "weiblich", "gesamt"))]
 
+
 ggplot(pdat, aes(x = year, y = diag_prop, group = year)) + 
   facet_wrap(Geschlecht ~ ., nrow = 1) +
-  geom_col(position = position_stack(), show.legend = F, fill = "dark blue", alpha = 0.9) +
+  geom_boxplot(fill = "dark blue", alpha = 0.7) +
   scale_x_continuous("Jahr", breaks = scales::pretty_breaks()) +
-  scale_y_continuous("", labels = scales::percent, limits = c(0,0.045))
-  
-ggsave(paste0("figures/fig1_diagnostic proportion_bar.png"), 
+  scale_y_continuous("", labels = scales::percent, limits = c(0,0.06))
+
+ggsave(paste0("figures/fig1_diagnostic proportion_boxplot.png"), 
        width = 10, height = 5)
 
 pdat[year == 2009]
 pdat[year == 2021]
 
 
-# 5.1) FIGURE 2 - Lag plot
+# 5.2) FIGURE 2 - Lag plot
 # ----------------------------------------------
 
 lag.dat <- data.table()
@@ -343,22 +370,5 @@ ggplot(lag.dat, aes(x = lag, y = coef)) +
 ggsave(paste0("figures/fig2_lag plot.png"), 
        width = 10, height = 5)
 
+rm(lag.dat)
 
-
-
-
-
-
-
-
-
-# ==================================================================================================================================================================
-# ==================================================================================================================================================================
-# ==================================================================================================================================================================
-
-
-a <- rnorm(100, 100,10)
-b <- rnorm(100, 104,10)
-t.test(a,b)
-
-cor.test(c(a,b),c(rep(1,100),rep(0,100)))
