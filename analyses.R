@@ -38,7 +38,7 @@ options(scipen=999)
 
 filename <- "data/data.csv"
 data <- data.table(read.csv(filename))
-nrow(data) # 442
+nrow(data) # 663
 
 # state... federal state name -> 16 states and national ("Bund")
 # sex... sex -> men and women
@@ -46,7 +46,6 @@ nrow(data) # 442
 # gkv_pop... population size (number of persons covered by statutory health insurance)
 # diag_prop... diagnostic proportion (dependent variable)
 # thc_dev... deviation of THC from 12% (independent variable)
-# thc_dev_lag_X ... lag of thc_dev by X years
 
 data$state <- factor(data$state,
                      levels = c("Bund", "Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", 
@@ -129,104 +128,6 @@ state.effects.women[, summary(slope.state)]
 #   .........................
 
 mod.nat <- data[state == "Bund" & sex == "total"]
-#mod.nat[, thc_med := Blüten - 12]
-#mod.nat[, diag.prop := diag.prop *100]
-
-#mod.nat$pred.glmm <- predict(mod2, 
-#          newdata = data.frame(thc_med = mod.nat[,thc_med]),
-#          re.form = NA)
-
-##  bootMer(mod2, nsim = 100, seed = 4984516) -- bootstrap = option for confidence intervals
-                             
-# ==================================================================================================================================================================
-# ==================================================================================================================================================================
-# ==================================================================================================================================================================
-
-# 3) ANALYSE DATA - LAGGED MODELS
-# ______________________________________________________________________________________________________________________
-
-# 3.1) Men
-# ----------------------------------------------
-
-##  lags: 0-5
-menmodlag0 <- lmer(diag_prop ~ thc_dev_lag_0 + (thc_dev_lag_0|state), data = mendat, REML = F)
-menmodlag1 <- lmer(diag_prop ~ thc_dev_lag_1 + (thc_dev_lag_1|state), data = mendat, REML = F)
-menmodlag2 <- lmer(diag_prop ~ thc_dev_lag_2 + (thc_dev_lag_2|state), data = mendat, REML = F)
-menmodlag3 <- lmer(diag_prop ~ thc_dev_lag_3 + (thc_dev_lag_3|state), data = mendat, REML = F)
-menmodlag4 <- lmer(diag_prop ~ thc_dev_lag_4 + (thc_dev_lag_4|state), data = mendat, REML = F)
-menmodlag5 <- lmer(diag_prop ~ thc_dev_lag_5 + (thc_dev_lag_5|state), data = mendat, REML = F)
-menmodlag6 <- lmer(diag_prop ~ thc_dev_lag_6 + (thc_dev_lag_6|state), data = mendat, REML = F)
-menmodlag7 <- lmer(diag_prop ~ thc_dev_lag_7 + (thc_dev_lag_7|state), data = mendat, REML = F) # singular fit
-menmodlag8 <- lmer(diag_prop ~ thc_dev_lag_8 + (thc_dev_lag_8|state), data = mendat, REML = F) # singular fit
-menmodlag9 <- lmer(diag_prop ~ thc_dev_lag_9 + (thc_dev_lag_9|state), data = mendat, REML = F) # singular fit
-menmodlag10 <- lmer(diag_prop ~ thc_dev_lag_10 + (thc_dev_lag_10|state), data = mendat, REML = F) # singular fit
-
-##  lags: 0-10 --> without random slope
-menmodlag0 <- lmer(diag_prop ~ thc_dev_lag_0 + (1|state), data = mendat, REML = F)
-menmodlag1 <- lmer(diag_prop ~ thc_dev_lag_1 + (1|state), data = mendat, REML = F)
-menmodlag2 <- lmer(diag_prop ~ thc_dev_lag_2 + (1|state), data = mendat, REML = F)
-menmodlag3 <- lmer(diag_prop ~ thc_dev_lag_3 + (1|state), data = mendat, REML = F)
-menmodlag4 <- lmer(diag_prop ~ thc_dev_lag_4 + (1|state), data = mendat, REML = F)
-menmodlag5 <- lmer(diag_prop ~ thc_dev_lag_5 + (1|state), data = mendat, REML = F)
-menmodlag6 <- lmer(diag_prop ~ thc_dev_lag_6 + (1|state), data = mendat, REML = F)
-menmodlag7 <- lmer(diag_prop ~ thc_dev_lag_7 + (1|state), data = mendat, REML = F)
-menmodlag8 <- lmer(diag_prop ~ thc_dev_lag_8 + (1|state), data = mendat, REML = F)
-menmodlag9 <- lmer(diag_prop ~ thc_dev_lag_9 + (1|state), data = mendat, REML = F)
-menmodlag10 <- lmer(diag_prop ~ thc_dev_lag_10 + (1|state), data = mendat, REML = F)
-
-sjPlot::tab_model(menmodlag0, 
-                  menmodlag1,
-                  menmodlag2,
-                  menmodlag3,
-                  menmodlag4,
-                  menmodlag5,
-                  menmodlag6,
-                  menmodlag7,
-                  menmodlag8,
-                  menmodlag9,
-                  menmodlag10) #
-
-
-# 3.2) Women
-# ----------------------------------------------
-
-##  lags: 0-10
-womenmodlag0 <- lmer(diag_prop ~ thc_dev_lag_0 + (thc_dev_lag_0|state), data = womendat, REML = F)
-womenmodlag1 <- lmer(diag_prop ~ thc_dev_lag_1 + (thc_dev_lag_1|state), data = womendat, REML = F)
-womenmodlag2 <- lmer(diag_prop ~ thc_dev_lag_2 + (thc_dev_lag_2|state), data = womendat, REML = F)
-womenmodlag3 <- lmer(diag_prop ~ thc_dev_lag_3 + (thc_dev_lag_3|state), data = womendat, REML = F)
-womenmodlag4 <- lmer(diag_prop ~ thc_dev_lag_4 + (thc_dev_lag_4|state), data = womendat, REML = F)
-womenmodlag5 <- lmer(diag_prop ~ thc_dev_lag_5 + (thc_dev_lag_5|state), data = womendat, REML = F)
-womenmodlag6 <- lmer(diag_prop ~ thc_dev_lag_6 + (thc_dev_lag_6|state), data = womendat, REML = F)
-womenmodlag7 <- lmer(diag_prop ~ thc_dev_lag_7 + (thc_dev_lag_7|state), data = womendat, REML = F) # singular fit
-womenmodlag8 <- lmer(diag_prop ~ thc_dev_lag_8 + (thc_dev_lag_8|state), data = womendat, REML = F) # singular fit
-womenmodlag9 <- lmer(diag_prop ~ thc_dev_lag_9 + (thc_dev_lag_9|state), data = womendat, REML = F) # singular fit
-womenmodlag10 <- lmer(diag_prop ~ thc_dev_lag_10 + (thc_dev_lag_10|state), data = womendat, REML = F) # singular fit
-
-##  lags: 0-10 --> without random slope
-womenmodlag0 <- lmer(diag_prop ~ thc_dev_lag_0 + (1|state), data = womendat, REML = F)
-womenmodlag1 <- lmer(diag_prop ~ thc_dev_lag_1 + (1|state), data = womendat, REML = F)
-womenmodlag2 <- lmer(diag_prop ~ thc_dev_lag_2 + (1|state), data = womendat, REML = F)
-womenmodlag3 <- lmer(diag_prop ~ thc_dev_lag_3 + (1|state), data = womendat, REML = F)
-womenmodlag4 <- lmer(diag_prop ~ thc_dev_lag_4 + (1|state), data = womendat, REML = F)
-womenmodlag5 <- lmer(diag_prop ~ thc_dev_lag_5 + (1|state), data = womendat, REML = F)
-womenmodlag6 <- lmer(diag_prop ~ thc_dev_lag_6 + (1|state), data = womendat, REML = F)
-womenmodlag7 <- lmer(diag_prop ~ thc_dev_lag_7 + (1|state), data = womendat, REML = F)
-womenmodlag8 <- lmer(diag_prop ~ thc_dev_lag_8 + (1|state), data = womendat, REML = F)
-womenmodlag9 <- lmer(diag_prop ~ thc_dev_lag_9 + (1|state), data = womendat, REML = F)
-womenmodlag10 <- lmer(diag_prop ~ thc_dev_lag_10 + (1|state), data = womendat, REML = F)
-
-sjPlot::tab_model(womenmodlag0, 
-                  womenmodlag1,
-                  womenmodlag2,
-                  womenmodlag3,
-                  womenmodlag4,
-                  womenmodlag5,
-                  womenmodlag6,
-                  womenmodlag7,
-                  womenmodlag8,
-                  womenmodlag9,
-                  womenmodlag10) #
 
 # ==================================================================================================================================================================
 # ==================================================================================================================================================================
@@ -238,22 +139,8 @@ sjPlot::tab_model(womenmodlag0,
 # 4.1) TABLE 1
 # ----------------------------------------------
 
-out <- copy(data)[year == 2021,.(state,sex,thc = (thc_dev+12)/100,diag_prop=diag_prop/100)][order(state,sex)]
-out <- dcast(out, state ~ sex, value.var = c("thc","diag_prop"))
-
-out <- out[,.(state,
-              thc_women,diag_prop_women,
-              thc_men,diag_prop_men,
-              thc_total,diag_prop_total)]
-
-write.csv(out, "tables/table 1.csv", row.names = F)
-
-# 4.2) TABLE 2
-# ----------------------------------------------
-
 sjPlot::tab_model(womenmod2, menmod2,
-                  file = "tables/table 2.html")
-
+                  file = "tables/table 1.html")
 
 
 # ==================================================================================================================================================================
@@ -319,56 +206,4 @@ ggsave(paste0("figures/fig1_diagnostic proportion_boxplot.png"),
 
 pdat[year == 2009]
 pdat[year == 2021]
-
-
-# 5.2) FIGURE 2 - Lag plot
-# ----------------------------------------------
-
-lag.dat <- data.table()
-
-for (lag in 0:10){
-
-  # women
-  temp <- get(paste0("womenmodlag",lag))
-  coef <- summary(temp)$coefficients[2,1]
-  ci <- confint(temp)[4,]
-  
-  lag.dat <- rbind(lag.dat,
-                   data.table(sex = "women",
-                              lag,
-                              coef,
-                              low = ci[1],
-                              high = ci[2]))
-  rm(temp,coef,ci)
-  
-  # men
-  temp <- get(paste0("menmodlag",lag))
-  coef <- summary(temp)$coefficients[2,1]
-  ci <- confint(temp)[4,]
-  
-  lag.dat <- rbind(lag.dat,
-                   data.table(sex = "men",
-                              lag,
-                              coef,
-                              low = ci[1],
-                              high = ci[2]))
-  rm(temp,coef,ci)
- 
-}
-
-lag.dat[,Geschlecht := ifelse(sex == "men","Männer",
-                           ifelse(sex == "women", "Frauen", "gesamt"))]
-
-ggplot(lag.dat, aes(x = lag, y = coef)) + 
-  facet_wrap(Geschlecht ~ ., nrow = 1) +
-  geom_hline(yintercept = 0, linetype = 10) +
-  geom_errorbar(aes(ymin = low, ymax = high), alpha = 0.5) +
-  geom_point(color = "dark blue",size = 2) + 
-  scale_x_continuous("Verzögerung in Jahren", breaks = scales::pretty_breaks()) +
-  scale_y_continuous("Koeffizient")
-
-ggsave(paste0("figures/fig2_lag plot.png"), 
-       width = 10, height = 5)
-
-rm(lag.dat)
 
