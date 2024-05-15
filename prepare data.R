@@ -113,6 +113,30 @@ data[!complete.cases(data)] # none
 data <- data[,.(state,sex,year,gkv_pop,diag_prop,thc_dev)]
 
 
+# 2.2) THC deviation and lags
+# ----------------------------------------------
+
+lag_dat <- copy(data[order(state,sex,year),.(state,sex,year,thc_dev)])
+
+for (lag in 0:10) {
+  
+  # Create lagged variable
+  lagged_variable <- paste("thc_dev_lag", lag, sep = "_")
+  
+  lag_dat[, lagged_variable := shift(thc_dev, lag), by = .(state,sex)]
+  lag_dat[[lagged_variable]] <- lag_dat$lagged_variable
+  lag_dat$lagged_variable <- NULL
+  
+}
+
+# add lags to data
+data <- merge(data,
+              lag_dat,
+              by = c("state","sex","year","thc_dev"), all.x = T)
+
+data <- data[,.SD, by = .(state,sex,year,gkv_pop,diag_prop,thc_dev)]
+
+
 # ==================================================================================================================================================================
 # ==================================================================================================================================================================
 # ==================================================================================================================================================================
