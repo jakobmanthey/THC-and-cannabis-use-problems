@@ -130,10 +130,27 @@ state.effects.women[, slope.state := slope.dev + slope.all]
 state.effects.women[, summary(slope.state)]
 
 
-##  PREDICT FOR NATIONAL
-#   .........................
+# 2.3) Sex interaction
+# ----------------------------------------------
 
-mod.nat <- data[state_en == "Germany" & sex == "total"]
+alldat <- copy(data)[state_en != "Germany" & sex != "total"]
+alldat$sex <- factor(alldat$sex, levels = c("women","men"))
+
+##  model 1: random intercept
+allmod1 <- lmer(diag_prop ~ thc_dev*sex + (1|state_en), data = alldat, REML = F)
+summary(allmod1)
+confint(allmod1) # THC: 0.1 to 0.2; THC*sex(male): 0.1 to 0.3
+
+##  model 2: random intercept + random slope
+allmod2 <- lmer(diag_prop ~ thc_dev*sex + (thc_dev|state_en), data = alldat, REML = F)
+summary(allmod2)
+confint(allmod2) # THC: 0.1 to 0.2; THC*sex(male): 0.1 to 0.3
+
+##  compare model fits
+anova(allmod1, allmod2) # mod2: lower AIC and BIC
+lmtest::lrtest(allmod1, allmod2) # same results -> lower LogLik in mod2
+sjPlot::tab_model(allmod1, allmod2) # mod2: increased ICC und higher conditional R2 (.76 vs .82)
+
 
 # ==================================================================================================================================================================
 # ==================================================================================================================================================================
